@@ -47,7 +47,8 @@ const compiler = webpack({
               remarkPlugins: [remarkContainer],
               rehypePlugins: [rehypePrism]
             }
-          }
+          },
+          path.resolve(__dirname, './utils/replace-loader')
         ]
       },
       {
