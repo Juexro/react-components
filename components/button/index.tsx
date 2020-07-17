@@ -18,6 +18,6 @@ export default function Button(props: ButtonProps) {
   }
 
   return (
-    <button {...rest} className={computedClasses()}>button</button>
+    <button {...rest} className={computedClasses()}></button>
   )
 }
