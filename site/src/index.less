@@ -1,1 +1,33 @@
 @import './prism.css';
+
+.api-container {
+  h2 {
+    margin-top: 16px;
+  }
+  table {
+    width: 100%;
+    empty-cells: show;
+    border: 1px solid #ebedf0;
+    border-collapse: collapse;
+    border-spacing: 0;
+    thead {
+      background-color: #fafafa;
+    }
+    th, td {
+      padding: 12px;
+    }
+    tr {
+      border-top: 1px solid #ebedf0;
+      transition-duration: 0.2s;
+      &:hover {
+        background-color: #f7f9f9;
+      }
+    }
+  }
+}
+
+.demo-container {
+  pre {
+    margin: 16px 0;
+  }
+}
