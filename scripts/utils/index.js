@@ -1,10 +1,9 @@
-const fs = require('fs');
-const path = require('path');
-
-function createComponentRoute() {
-
+function camelCase(str) {
+  return str.replace(/[a-zA-Z]/, (letter) => {
+    return letter.toUpperCase();
+  })
 }
 
 module.exports = {
-
+  camelCase
 }

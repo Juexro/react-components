@@ -3,6 +3,7 @@ import { Router, Switch, RouteProps, Route } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import Home from '../views/home';
 import components from './components';
+import Components from '../views/components';
 
 export interface CustomRouteProps extends RouteProps {
 }
@@ -13,7 +14,11 @@ const routes: CustomRouteProps[] = [
     path: '/',
     exact: true
   },
-  ...components
+  {
+    component: Components,
+    path: '/components',
+    children: components
+  }
 ];
 
 export const browserHistory = createBrowserHistory();

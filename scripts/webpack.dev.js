@@ -12,7 +12,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const app = express();
 
-const { SITE_DIR, COMPONENT_DIR, DOCS_DIR } = require('./doc.config');
+const { SITE_DIR, COMPONENT_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS } = require('./doc.config');
 
 const port = 9000;
 
@@ -26,8 +26,8 @@ const compiler = webpack({
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.mdx'],
     mainFiles: ['index'],
     alias: {
-      'docs': DOCS_DIR,
-      'components': COMPONENT_DIR
+      [DOCS_ALIAS]: DOCS_DIR,
+      [COMPONENT_ALIAS]: COMPONENT_DIR
     }
   },
   module: {

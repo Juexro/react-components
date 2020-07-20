@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node ./scripts/webpack.dev.js"
+    "update": "node ./scripts/create-doc-route.js",
+    "dev": "node ./scripts/create-doc-route.js && node ./scripts/webpack.dev.js"
   },
   "keywords": [],
   "author": "",
