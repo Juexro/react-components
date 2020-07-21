@@ -12,8 +12,8 @@ export default function Button(props: ButtonProps) {
   return (
     <button {...rest}
       className={classNames(className, {
-        'jrc-button': true,
-        [`jrc-button--${type}`]: true
+        [`${process.env.prefix}-button`]: true,
+        [`${process.env.prefix}-button--${type}`]: true
       })}></button>
   )
 }

@@ -12,7 +12,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const app = express();
 
-const { SITE_DIR, COMPONENT_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS } = require('./doc.config');
+const { SITE_DIR, COMPONENT_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS, COMPONENT_PREFIX } = require('./doc.config');
 
 const port = 9000;
 
@@ -66,7 +66,11 @@ const compiler = webpack({
             options: {
               patterns: [
                 path.resolve(`${COMPONENT_DIR}/global.less`)
-              ]
+              ],
+              injector: (source, resouces) => {
+                console.log(source)
+                return `@prefix: ${COMPONENT_PREFIX};` + resouces.map(({ content }) => content).join('') + source;
+              }
             }
           }
         ],
@@ -131,6 +135,9 @@ const compiler = webpack({
           collapseWhitespace: true,
           removeAttributeQuotes: true
         }
+    }),
+    new webpack.EnvironmentPlugin({
+      prefix: COMPONENT_PREFIX
     })
   ]
 });
@@ -142,6 +149,7 @@ const devMiddleware = webpackDevMiddleware(compiler, {
 
 const hotMiddleware = webpackHotMiddleware(compiler, {
   log: (str) => {
+    console.clear();
     console.log(chalk.green(str));
   }
 });
