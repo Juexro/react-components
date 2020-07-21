@@ -137,11 +137,13 @@ const compiler = webpack({
 
 const devMiddleware = webpackDevMiddleware(compiler, {
   publicPath: '/',
-  // logLevel: 'silent'
+  logLevel: 'error'
 });
 
 const hotMiddleware = webpackHotMiddleware(compiler, {
-  // log: false
+  log: (str) => {
+    console.log(chalk.green(str));
+  }
 });
 
 compiler.hooks.compilation.tap('html-webpack-plugin-after-emit', () => {
