@@ -1,35 +1,31 @@
-const webpack = require('webpack');
 const fs = require('fs');
-const chalk = require('chalk');
 const path = require('path');
+const webpack = require('webpack');
 const rehypePrism = require('@mapbox/rehype-prism');
 const remarkContainer = require('remark-containers');
+const chalk = require('chalk');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
-const express = require('express');
-const webpackDevMiddleware = require('webpack-dev-middleware');
-const webpackHotMiddleware = require('webpack-hot-middleware');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-
-const app = express();
-
-const { SITE_DIR, COMPONENT_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS, COMPONENT_PREFIX } = require('./doc.config');
-
-const port = 9000;
-
-const openUrl = `http://localhost:${port}`;
-
-console.log(chalk.yellow('The development server is starting......wait me.'));
+const { COMPONENT_DIR, SITE_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS, COMPONENT_PREFIX } = require('./doc.config');
 
 const compiler = webpack({
-  mode: 'development',
-  entry: ['webpack-hot-middleware/client?reload=true&noInfo=true', './site/src/main.tsx'],
+  mode: 'production',
+  entry: fs.readdirSync(COMPONENT_DIR).reduce((total, current) => {
+    if (!['global.less'].includes(current)) {
+      total[current] = `./${COMPONENT_ALIAS}/${current}`;
+    }
+    return total;
+  }, {}),
   output: {
-    publicPath: '/',
-    path: path.resolve(__dirname, '../dist'),
-    filename: 'static/js/[name].[hash].js',
-    chunkFilename: 'static/js/[name].[chunkhash].js'
+    path: path.resolve('./lib'),
+    filename: '[name]/index.js',
+    library: ['@juexro/react-components', '[name]'], 
+    libraryTarget: 'umd',
+    publicPath: '/'
   },
-  devtool: '#cheap-module-eval-source-map',
+  devtool: false,
+  externals: ['react', 'react-dom'],
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.mdx'],
     alias: {
@@ -66,7 +62,7 @@ const compiler = webpack({
       {
         test: /\.less$/,
         use: [
-          'style-loader',
+          MiniCssExtractPlugin.loader,
           'css-loader', 'postcss-loader', 'less-loader',
           {
             loader: 'style-resources-loader',
@@ -86,7 +82,7 @@ const compiler = webpack({
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader', 'postcss-loader']
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader']
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
@@ -115,18 +111,12 @@ const compiler = webpack({
     ]
   },
   plugins: [
-    new webpack.HotModuleReplacementPlugin(),
-    new HtmlWebpackPlugin({
-      template: 'site/index.html',
-      filename: 'index.html',
-      minify: {
-        removeComments: true,
-        collapseWhitespace: true,
-        removeAttributeQuotes: true
-      }
-    }),
     new webpack.EnvironmentPlugin({
       prefix: COMPONENT_PREFIX
+    }),
+    new CleanWebpackPlugin(),
+    new MiniCssExtractPlugin({
+      filename: '[name]/style.css'
     })
   ],
   optimization: {
@@ -142,41 +132,18 @@ const compiler = webpack({
   }
 });
 
-const devMiddleware = webpackDevMiddleware(compiler, {
-  publicPath: '/',
-  logLevel: 'error'
-});
-
-const hotMiddleware = webpackHotMiddleware(compiler, {
-  log: (str) => {
-    console.clear();
-    console.log(chalk.green(str));
+compiler.run((err, stats) => {
+  if (err) {
+    throw err;
   }
+
+  process.stdout.write(stats.toString({
+    colors: true,
+    modules: false,
+    children: false,
+    chunks: false,
+    chunkModules: false
+  }) + '\n\n');
+
+  console.log(chalk.cyan('Build complete.\n'));
 });
-
-compiler.hooks.compilation.tap('html-webpack-plugin-after-emit', () => {
-  hotMiddleware.publish({
-    action: 'reload'
-  });
-});
-
-app.use(devMiddleware);
-app.use(hotMiddleware);
-
-app.get('*', (req, res, next) =>{
-  const filename = path.join(__dirname, '..', 'dist', 'index.html');
-  compiler.outputFileSystem.readFile(filename, (err, result) =>{
-    if(err){
-        return(next(err));
-    }
-    res.set('content-type', 'text/html');
-    res.send(result);
-    res.end();
-  });
-})
-
-devMiddleware.waitUntilValid(() => {
-  console.log(chalk.yellow(`I am ready. open ${openUrl} to see me.`))
-});
-
-app.listen(port);
