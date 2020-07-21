@@ -8,24 +8,38 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 const { COMPONENT_DIR, SITE_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS, COMPONENT_PREFIX } = require('./doc.config');
+const { getParentDirectory } = require('./utils');
+
+const IS_COMPONENT_ALIAS = new RegExp(`^${COMPONENT_ALIAS}/`);
 
 const compiler = webpack({
   mode: 'production',
-  entry: fs.readdirSync(COMPONENT_DIR).reduce((total, current) => {
-    if (!['global.less'].includes(current)) {
-      total[current] = `./${COMPONENT_ALIAS}/${current}`;
+  entry: fs.readdirSync(COMPONENT_DIR).reduce((map, name) => {
+    if (!['global.less'].includes(name)) {
+      map[name] = `./${COMPONENT_ALIAS}/${name}`;
     }
-    return total;
+    return map;
   }, {}),
   output: {
     path: path.resolve('./lib'),
     filename: '[name]/index.js',
-    library: ['@juexro/react-components', '[name]'], 
+    library: ['@juexro/react-components', '[name]'],
     libraryTarget: 'umd',
     publicPath: '/'
   },
   devtool: false,
-  externals: ['react', 'react-dom'],
+  externals: [
+    'react',
+    'react-dom',
+    function ignorePeerComponent(context, request, callback) {
+      if (IS_COMPONENT_ALIAS.test(request)) {
+        if (getParentDirectory(context) === getParentDirectory(request)) {
+          return callback(null, `commonjs ../${path.parse(request).name}`)
+        }
+      }
+      callback();
+    }
+  ],
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.mdx'],
     alias: {
@@ -119,9 +133,6 @@ const compiler = webpack({
       filename: '[name]/style.css'
     })
   ],
-  optimization: {
-    noEmitOnErrors: true
-  },
   node: {
     setImmediate: false,
     dgram: 'empty',
