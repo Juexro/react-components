@@ -1,5 +1,6 @@
 import React from 'react';
 import './style.less';
+import { classNames } from 'components/utils';
 
 interface ButtonProps extends React.HTMLAttributes<HTMLButtonElement> {
   type?: string;
@@ -8,16 +9,11 @@ interface ButtonProps extends React.HTMLAttributes<HTMLButtonElement> {
 export default function Button(props: ButtonProps) {
   const { type = 'default', className, ...rest } = props;
 
-  const computedClasses = () => {
-    const classes = ['jrc-button'];
-    if (className) {
-      classes.push(className);
-    }
-    classes.push(`jrc-button--${type}`);
-    return classes.join(' ');
-  }
-
   return (
-    <button {...rest} className={computedClasses()}></button>
+    <button {...rest}
+      className={classNames(className, {
+        'jrc-button': true,
+        [`jrc-button--${type}`]: true
+      })}></button>
   )
 }
