@@ -1,9 +1,11 @@
 const path = require('path');
 
 function camelCase(str) {
-  return str.replace(/[a-zA-Z]/, (letter) => {
-    return letter.toUpperCase();
-  })
+  return str.split(/[-_]/).map(item => {
+    return item.replace(/[a-zA-Z]/, (letter) => {
+      return letter.toUpperCase();
+    })
+  }).join('')
 }
 
 function getParentDirectory(dir) {
