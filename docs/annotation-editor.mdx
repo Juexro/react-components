@@ -1,0 +1,42 @@
+---
+name: 'AnnotationEditor 标注工具'
+---
+
+import AnnotationEditor, { AnnotationEditorMode } from 'components/annotation-editor';
+import TestImage from './test.png';
+import { useRef, useEffect, useState } from 'react';
+<div>12</div>
+
+export default function  Editor() {
+  const ref = useRef();
+  let instance = null;
+  const tools = [
+    { label: 'drag', handler: () => { instance.switchMode(AnnotationEditorMode.DragImage) } },
+    { label: 'rect', handler: () => { instance.switchMode(AnnotationEditorMode.Rect) } },
+    { label: 'polyline', handler: () => { instance.switchMode(AnnotationEditorMode.Polyline) } },
+    { label: 'edit', handler: () => { instance.switchMode(AnnotationEditorMode.Edit) } },
+    { label: 'scale', handler: () => { instance.switchMode(AnnotationEditorMode.Move) } },
+    { label: 'clip', handler: () => { instance.clipImage() } }
+  ];
+  useEffect(() => {
+    instance = new AnnotationEditor(ref.current);
+    instance.init({
+      imgUrl: TestImage,
+      mode: AnnotationEditorMode.DragImage
+    })
+  }, []);
+  return (
+    <div>
+      <div>
+        {
+          tools.map((tool, index) => {
+            return (
+              <button key={index} onClick={tool.handler} style={{marginRight: '10px'}}>{tool.label}</button>
+            )
+          })
+        }
+      </div>
+      <div style={{width: '100%', height: '800px'}} ref={ref}></div>
+    </div>
+  )
+}
