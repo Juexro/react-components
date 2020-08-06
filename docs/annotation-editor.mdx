@@ -5,7 +5,7 @@ name: 'AnnotationEditor 标注工具'
 import AnnotationEditor, { AnnotationEditorMode } from 'components/annotation-editor';
 import TestImage from './test.png';
 import { useRef, useEffect, useState } from 'react';
-<div>12</div>
+import Button from 'components/button';
 
 export default function  Editor() {
   const ref = useRef();
@@ -31,7 +31,7 @@ export default function  Editor() {
         {
           tools.map((tool, index) => {
             return (
-              <button key={index} onClick={tool.handler} style={{marginRight: '10px'}}>{tool.label}</button>
+              <Button key={index} onClick={tool.handler} style={{marginRight: '10px'}}>{tool.label}</Button>
             )
           })
         }
