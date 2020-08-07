@@ -6,6 +6,7 @@ import components from './components';
 import Components from '../views/components';
 
 export interface CustomRouteProps extends RouteProps {
+  meta?: { [name: string]: any };
 }
 
 const routes: CustomRouteProps[] = [

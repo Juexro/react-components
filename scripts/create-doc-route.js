@@ -18,34 +18,42 @@ fs.readdirSync(DOCS_DIR).forEach(filename => {
       path: `/${COMPONENT_ALIAS}/${path.parse(filename).name}`
     };
 
+    let origin = [];
+
     if (yaml) {
       const maps = yaml[0].split(SPLIT_LINE);
       maps.pop();
       maps.shift();
       maps.forEach(item => {
         const [key, value] = item.split(':');
+
+        origin.push(`${key.trim()}: ${value.trim()}`);
         const formatter = (new Function(`return {${key.trim()}: ${value.trim()}}`))();
         Object.assign(options, formatter);
       });
     }
-    componentsMap.set(filename, options);
+
+    componentsMap.set(filename, {
+      format: options,
+      origin
+    });
   }
 });
 
-let importTpl = '';
-let componentsTpl = '';
+const importSentences = [];
+const componentsSentences = [];
 
-for (let [filename, options] of componentsMap) {
+for (let [filename, { format, origin }] of componentsMap) {
   const componentName = camelCase(path.parse(filename).name);
-  importTpl += `import ${componentName} from '${DOCS_ALIAS}/${filename}';\n`;
-  componentsTpl += `  { component: ${componentName }, path: '${options.path}', exact: true },`
+
+  importSentences.push(`import ${componentName} from '${DOCS_ALIAS}/${filename}';`);
+  componentsSentences.push(`{ component: ${componentName}, path: '${format.path}', exact: true, meta: { ${origin.join(', ')} } }`);
 }
 
-componentsTpl = `
+fs.writeFileSync(componentRoutePath, `${importSentences.join('\n')}
+
 const components = [
-${componentsTpl}
+  ${componentsSentences.join(',\n  ')}
 ];
 
-export default components;`;
-
-fs.writeFileSync(componentRoutePath, `${importTpl}${componentsTpl}`);
+export default components;`);
