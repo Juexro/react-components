@@ -11,19 +11,12 @@ export interface OptionalAnnotationEditorOptions {
 }
 
 export interface ObjectData {
-  group: {
-    position: [number, number],
-    scale: [number, number],
-    rotation: number,
-  };
-  geometry: {
-    type: 'image' | 'rect' | 'polyline',
-    style: { [name: string ]: any },
-    shape: { [name: string ]: any },
-    position: [number, number],
-    scale: [number, number],
-    rotation: number,
-  }
+  type: 'image' | 'rect' | 'polyline',
+  style: { [name: string ]: any },
+  shape: { [name: string ]: any },
+  position: [number, number],
+  scale: [number, number],
+  rotation: number,
 }
 
 export enum AnnotationEditorMode {
@@ -100,6 +93,23 @@ export default class AnnotationEditor {
       }
     });
     return geo;
+  }
+
+  public setModel(model: ObjectData[]) {
+    this.objects.forEach(object => {
+      this.workspace.remove(object);
+    });
+    this.objects = [];
+
+    model.forEach(data => {
+      const geo = this.toObjectModel(data);
+      this.objects.push(geo);
+      this.workspace.add(geo);
+    });
+  }
+
+  public getModel() {
+    return this.objects.map(object => this.toObjectData(object));
   }
 
   private computedShapeXyRange(geo: any) {
@@ -348,44 +358,51 @@ export default class AnnotationEditor {
     }
   }
 
-  private toObjectModel(obj: ObjectData) {
-    const { geometry, group } = obj;
+  private toObjectModel(obj: ObjectData, isGroup = true) {
+    const { type, position = [0, 0], scale = [1, 1], rotation = 0, style = {}, shape = {} } = obj;
 
-    const grp = new zrender.Group({ ...(group || {}) });
-    const type = {
+    const GeoMap = {
       image: zrender.Image,
       rect: zrender.Rect,
       polyline: zrender.Polyline
     };
 
-    const geo = new type[geometry.type]({
-      style: geometry.style,
-      shape: geometry.shape,
-      position: geometry.position,
-      scale: geometry.scale,
-      rotation: geometry.rotation
-    });
+    if (isGroup) {
+      const grp = new zrender.Group({
+        position,
+        scale,
+        rotation
+      });
+      grp.category = 'annotation';
 
-    grp.add(geo);
-    return grp;
+      const geo = new GeoMap[type]({
+        style,
+        shape
+      });
+  
+      grp.add(geo);
+      return grp;
+    } else {
+      return new GeoMap[type]({
+        position,
+        scale,
+        rotation,
+        style,
+        shape
+      })
+    }
   }
 
   private toObjectData(grp: any): ObjectData {
     const geo = grp.childAt(0);
+
     return {
-      group: {
-        position: grp.position || [0, 0],
-        scale: grp.scale || [1, 1],
-        rotation: grp.rotation || 0,
-      },
-      geometry: {
-        type: geo.type,
-        style: { ...(geo.style || {}) },
-        shape: { ...(geo.shape || {}) },
-        position: geo.position || [0, 0],
-        scale: geo.scale || [1, 1],
-        rotation: geo.rotation || 0,
-      }
+      type: geo.type,
+      style: { ...(geo.style || {}) },
+      shape: { ...(geo.shape || {}) },
+      position: grp.position || [0, 0],
+      scale: grp.scale || [1, 1],
+      rotation: grp.rotation || 0,
     }
   }
 
@@ -412,22 +429,14 @@ export default class AnnotationEditor {
         workspace.remove(prevGeo);
       }
 
-      const { group, geometry } = this.toObjectData(object);
+      const objectData = this.toObjectData(object);
       const geo = this.toObjectModel({
-        group: {
-          position: [0, 0],
-          scale: [1, 1],
-          rotation: 0
+        ...objectData,
+        style: {
+          ...objectData.style,
+          stroke: 'transparent'
         },
-        geometry: {
-          ...geometry,
-          style: {
-            ...geometry.style,
-            stroke: 'transparent'
-          },
-          ...group
-        }
-      });
+      }, false);
 
       prevGeo = geo;
       workspace.add(geo);
@@ -438,8 +447,8 @@ export default class AnnotationEditor {
       const {xRange, yRange} = this.computedShapeXyRange(geo.childAt(0));
 
       const imageData = origin.getContext('2d')?.getImageData(
-        xRange[0] + group.position[0],
-        yRange[0] + group.position[1],
+        xRange[0] + objectData.position[0],
+        yRange[0] + objectData.position[1],
         xRange[1] - xRange[0],
         yRange[1] - yRange[0]
       );
