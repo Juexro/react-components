@@ -8,6 +8,7 @@ export const FullScreen = styled.div`
 
 export const Menu = styled.div`
   width: 20rem;
+  flex-shrink: 0;
 `;
 
 export const MenuItem = styled.div`

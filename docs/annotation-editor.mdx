@@ -11,19 +11,23 @@ export default function  Editor() {
   const ref = useRef();
   let instance = null;
   const tools = [
-    { label: 'drag', handler: () => { instance.switchMode(AnnotationEditorMode.DragImage) } },
-    { label: 'rect', handler: () => { instance.switchMode(AnnotationEditorMode.Rect) } },
-    { label: 'polyline', handler: () => { instance.switchMode(AnnotationEditorMode.Polyline) } },
-    { label: 'edit', handler: () => { instance.switchMode(AnnotationEditorMode.Edit) } },
-    { label: 'scale', handler: () => { instance.switchMode(AnnotationEditorMode.Move) } },
-    { label: 'clip', handler: () => { instance.clipImage() } }
+    { label: '移动画布', handler: () => { instance.switchMode(AnnotationEditorMode.DragImage) } },
+    { label: 'Alt 缩放画布', handler: () => { instance.switchMode(AnnotationEditorMode.Scale) } },
+    { label: '矩形', handler: () => { instance.switchMode(AnnotationEditorMode.Rect) } },
+    { label: '多边形', handler: () => { instance.switchMode(AnnotationEditorMode.Polyline) } },
+    { label: '移动图形', handler: () => { instance.switchMode(AnnotationEditorMode.Edit) } },
+    { label: '选中图形', handler: () => { instance.switchMode(AnnotationEditorMode.Select) } },
+    { label: '裁剪选中图形', handler: () => { instance.clipImage() } }
   ];
   useEffect(() => {
     instance = new AnnotationEditor(ref.current);
     instance.init({
       imgUrl: TestImage,
-      mode: AnnotationEditorMode.DragImage
-    })
+      mode: AnnotationEditorMode.DragImage,
+      select: (grp, data) => {
+        console.log(data);
+      }
+    });
   }, []);
   return (
     <div>
