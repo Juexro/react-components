@@ -12,8 +12,11 @@ $ yarn run dev
 # update routes
 $ yarn run update
 
-# generate package
+# build lib
 $ yarn run build
+
+# build es module
+$ yarn run build:es
 ```
 
 ## 🎨 Components
