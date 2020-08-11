@@ -3,11 +3,13 @@ import zrender from 'zrender';
 export interface AnnotationEditorOptions {
   imgUrl: string;
   mode?: AnnotationEditorMode;
+  select?: (instance: any, data: ObjectData) => void;
 }
 
 export interface OptionalAnnotationEditorOptions {
   imgUrl?: string;
   mode?: AnnotationEditorMode;
+  select?: (instance: any, data: ObjectData) => void;
 }
 
 export interface ObjectData {
@@ -24,12 +26,13 @@ export enum AnnotationEditorMode {
   Polyline,
   DragImage,
   Edit,
-  Move
+  Scale,
+  Select
 }
 
 export default class AnnotationEditor {
   public instance: any;
-  public options: AnnotationEditorOptions | {} = {};
+  public options: AnnotationEditorOptions | OptionalAnnotationEditorOptions = {};
   public workspace: any;
   public image: any;
   public objects: any[] = [];
@@ -390,7 +393,7 @@ export default class AnnotationEditor {
         })
         break;
       }
-      case AnnotationEditorMode.Move: {
+      case AnnotationEditorMode.Scale: {
         const mousewheel = (e: any) => {
           if (e.event.altKey) {
             const [scaleX, scaleY] = this.workspace.scale;
@@ -402,6 +405,16 @@ export default class AnnotationEditor {
           }
         };
         on('mousewheel', mousewheel);
+        break;
+      }
+      case AnnotationEditorMode.Select: {
+        this.objects.forEach((grp: any) => {
+          grp.on('click', () => {
+            if (this.options.select) {
+              this.options.select(grp, this.toObjectData(grp));
+            }
+          });
+        });
         break;
       }
     }
