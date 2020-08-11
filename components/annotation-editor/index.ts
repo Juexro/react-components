@@ -168,6 +168,16 @@ export default class AnnotationEditor {
     }
   }
 
+  private computedNumberInRange(number: number, range: [number, number]) {
+    if (number > range[1]) {
+      return range[1];
+    }
+    if (number < range[0]) {
+      return range[0];
+    }
+    return number;
+  }
+
   private switchModeHooks: Array<() => void> = [];
 
   public switchMode(mode: AnnotationEditorMode | undefined) {
@@ -207,7 +217,8 @@ export default class AnnotationEditor {
             y: offsetY
           };
           const grp = new zrender.Group({
-            draggable: false
+            draggable: false,
+            position: [0, 0]
           });
           grp.category = 'annotation';
           const rect = new zrender.Rect({
@@ -268,7 +279,8 @@ export default class AnnotationEditor {
 
           if (!polyline) {
             const grp = new zrender.Group({
-              draggable: false
+              draggable: false,
+              position: [0, 0]
             });
             grp.category = 'annotation';
 
@@ -334,8 +346,45 @@ export default class AnnotationEditor {
       case AnnotationEditorMode.Edit: {
         this.workspace.eachChild((grp: any) => {
           if (grp.type === 'group' && grp.category === 'annotation') {
-            grp.attr({
-              draggable: true
+            const mousedown = (e: any) => {
+              const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+              const mousedownPosition = {
+                x: offsetX,
+                y: offsetY
+              };
+
+              const geoRange = this.computedShapeXyRange(grp.childAt(0));
+
+              const range = {
+                rangeX: [geoRange.xRange[0] + grp.position[0], geoRange.xRange[1] + grp.position[0]],
+                rangeY: [geoRange.yRange[0] + grp.position[1], geoRange.yRange[1] + grp.position[1]]
+              };
+              const [positionX, positionY] = grp.position;
+
+              const xRange: [number, number] = [-range.rangeX[0], this.image.style.width - range.rangeX[1]];
+              const yRange: [number, number] = [-range.rangeY[0], this.image.style.height - range.rangeY[1]];
+      
+              const mousemove = (e: any) => {
+                const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+
+                grp.attr({
+                  position: [
+                    positionX + this.computedNumberInRange(offsetX - mousedownPosition.x, xRange),
+                    positionY + this.computedNumberInRange(offsetY - mousedownPosition.y, yRange)
+                  ]
+                })
+              };
+              this.instance.on('mousemove', mousemove);
+              const mouseup = (e: any) => {
+                this.instance.off('mousemove', mousemove);
+                this.instance.off('mouseup', mouseup);
+              };
+              this.instance.on('mouseup', mouseup);
+            };
+
+            grp.on('mousedown', mousedown);
+            this.switchModeHooks.push(() => {
+              grp.off('mousedown', mousedown);
             });
           }
         })
