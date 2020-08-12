@@ -1,14 +1,20 @@
 {
-  "name": "react-components",
+  "name": "@juexro/react-components",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "module": "es/index.js",
   "scripts": {
     "update": "node ./scripts/create-doc-route.js",
     "dev": "node ./scripts/create-doc-route.js && node ./scripts/webpack.dev.js",
     "build": "node ./scripts/build-components.js",
+    "create:entry": "node ./scripts/create-entry.js",
     "build:es": "rimraf ./es && tsc --build tsconfig.build.json && node ./scripts/copy-less.js"
   },
+  "files": [
+    "lib",
+    "es"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -50,6 +56,6 @@
     "webpack": "^4.43.0",
     "webpack-dev-middleware": "^3.7.2",
     "webpack-hot-middleware": "^2.25.0",
-    "zrender": "^4.3.1"
+    "zrender": "^4.3.2"
   }
 }

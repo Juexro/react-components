@@ -1,6 +1,6 @@
 import React from 'react';
 import './style.less';
-import { classNames } from 'components/utils';
+import { classNames } from '../utils';
 
 interface ButtonProps extends React.HTMLAttributes<HTMLButtonElement> {
   type?: string;
