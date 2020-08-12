@@ -10,8 +10,6 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const { COMPONENT_DIR, SITE_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS, COMPONENT_PREFIX } = require('./doc.config');
 const { getParentDirectory } = require('./utils');
 
-const IS_COMPONENT_ALIAS = new RegExp(`^${COMPONENT_ALIAS}/`);
-
 const compiler = webpack({
   mode: 'production',
   entry: fs.readdirSync(COMPONENT_DIR).reduce((map, name) => {
@@ -32,9 +30,9 @@ const compiler = webpack({
     'react',
     'react-dom',
     function ignorePeerComponent(context, request, callback) {
-      if (IS_COMPONENT_ALIAS.test(request)) {
-        if (getParentDirectory(context) === getParentDirectory(request)) {
-          return callback(null, `commonjs ../${path.parse(request).name}`)
+      if (context.indexOf(COMPONENT_DIR) === 0) {
+        if (getParentDirectory(context) === getParentDirectory(path.join(context, request))) {
+          return callback(null, `commonjs ${request}`)
         }
       }
       callback();
