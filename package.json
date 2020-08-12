@@ -1,23 +1,34 @@
 {
   "name": "@juexro/react-components",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.4",
+  "description": "react components",
   "main": "lib/index.js",
   "module": "es/index.js",
   "scripts": {
     "update": "node ./scripts/create-doc-route.js",
     "dev": "node ./scripts/create-doc-route.js && node ./scripts/webpack.dev.js",
     "build": "node ./scripts/build-components.js",
-    "create:entry": "node ./scripts/create-entry.js",
-    "build:es": "rimraf ./es && tsc --build tsconfig.build.json && node ./scripts/copy-less.js"
+    "update:entry": "node ./scripts/create-entry.js",
+    "build:es": "rimraf ./es && rimraf ./components/index.tsx && node ./scripts/create-entry.js && tsc --build tsconfig.build.json && node ./scripts/copy-less.js"
   },
   "files": [
     "lib",
     "es"
   ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "component",
+    "components",
+    "frontend",
+    "react",
+    "react-component"
+  ],
+  "author": "juexro@163.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Juexro/react-components"
+  },
+  "homepage": "https://github.com/Juexro/react-components",
+  "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.10.5",
     "@babel/plugin-proposal-class-properties": "^7.10.4",
