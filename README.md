@@ -12,8 +12,8 @@ $ yarn run dev
 # update routes
 $ yarn run update
 
-# create entry
-$ yarn run create:entry
+# update entry
+$ yarn run update:entry
 
 # build lib
 $ yarn run build
