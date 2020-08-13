@@ -4,6 +4,7 @@
   "description": "react components",
   "main": "lib/index.js",
   "module": "es/index.js",
+  "typings": "es/index.d.ts",
   "scripts": {
     "update": "node ./scripts/create-doc-route.js",
     "dev": "node ./scripts/create-doc-route.js && node ./scripts/webpack.dev.js",
