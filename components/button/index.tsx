@@ -3,7 +3,7 @@ import './style.less';
 import { classNames } from '../utils';
 
 interface ButtonProps extends React.HTMLAttributes<HTMLButtonElement> {
-  type?: string;
+  type?: 'default' | 'primary' | 'warning' | 'danger';
 }
 
 export default function Button(props: ButtonProps) {
