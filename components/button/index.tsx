@@ -1,5 +1,5 @@
 import React from 'react';
-import './style.less';
+import './style';
 import { classNames } from '../utils';
 
 interface ButtonProps extends React.HTMLAttributes<HTMLButtonElement> {
@@ -12,8 +12,8 @@ export default function Button(props: ButtonProps) {
   return (
     <button {...rest}
       className={classNames(className, {
-        [`${process.env.prefix}-button`]: true,
-        [`${process.env.prefix}-button--${type}`]: true
+        [`${process.env.COMPONENT_PREFIX}-button`]: true,
+        [`${process.env.COMPONENT_PREFIX}-button--${type}`]: true
       })}></button>
   )
 }
