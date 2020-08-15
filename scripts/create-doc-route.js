@@ -2,20 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const { DOCS_DIR, SITE_DIR, DOCS_ALIAS, COMPONENT_ALIAS } = require('./doc.config');
-const { camelCase } = require('./utils');
+const { camelCase, getJrcConfig } = require('./utils');
+const { docsDir, siteDir } = getJrcConfig();
 const YAML_REGEXP = /---[\s\S]+?---/;
 const SPLIT_LINE = os.platform() === 'win32' ? /\r\n/ : /\n/;
 
-const componentRoutePath = path.resolve(SITE_DIR, './src/routes/components.tsx');
+const componentRoutePath = path.resolve(siteDir, './src/routes/components.tsx');
 const componentsMap = new Map();
 
-fs.readdirSync(DOCS_DIR).forEach(filename => {
+fs.readdirSync(docsDir).forEach(filename => {
   if (/^\.(md|mdx)$/.test(path.extname(filename))) {
-    const str = fs.readFileSync(path.resolve(DOCS_DIR, filename)).toString();
+    const str = fs.readFileSync(path.join(docsDir, filename)).toString();
     const yaml = str.match(YAML_REGEXP);
     const options = {
-      path: `/${COMPONENT_ALIAS}/${path.parse(filename).name}`
+      path: `/components/${path.parse(filename).name}`
     };
 
     let origin = [];
@@ -46,7 +46,7 @@ const componentsSentences = [];
 for (let [filename, { format, origin }] of componentsMap) {
   const componentName = camelCase(path.parse(filename).name);
 
-  importSentences.push(`import ${componentName} from '${DOCS_ALIAS}/${filename}';`);
+  importSentences.push(`import ${componentName} from '@/docs/${filename}';`);
   componentsSentences.push(`{ component: ${componentName}, path: '${format.path}', exact: true, meta: { ${origin.join(', ')} } }`);
 }
 

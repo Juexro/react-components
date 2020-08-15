@@ -1,13 +1,14 @@
 const fs = require('fs');
 const path = require('path');
-const { camelCase } = require('./utils');
-const { COMPONENT_DIR } = require('./doc.config');
+const { camelCase, getJrcConfig } = require('./utils');
+
+const { componentDir } = getJrcConfig();
 
 const importSentences = [];
 const exportSentences = [];
 
-fs.readdirSync(COMPONENT_DIR).forEach(filename => {
-  if (filename === 'global.less') {
+fs.readdirSync(componentDir).forEach(filename => {
+  if (['theme', 'index.tsx'].includes(filename)) {
     return;
   }
   if (filename === 'utils') {
@@ -20,7 +21,7 @@ fs.readdirSync(COMPONENT_DIR).forEach(filename => {
   }
 });
 
-fs.writeFileSync(path.join(COMPONENT_DIR, 'index.tsx'), `${importSentences.join(';\n')}
+fs.writeFileSync(path.join(componentDir, 'index.tsx'), `${importSentences.join(';\n')}
 
 export {
   ${exportSentences.join(',\n  ')}

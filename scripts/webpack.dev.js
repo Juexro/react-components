@@ -10,17 +10,18 @@ const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+const { getEnvConfig, getJrcConfig, resolve } = require('./utils');
+
+const envConfig = getEnvConfig();
+const { port, siteDir, componentDir, rewriteWebpackConfig } = getJrcConfig();
+
 const app = express();
-
-const { SITE_DIR, COMPONENT_DIR, DOCS_DIR, DOCS_ALIAS, COMPONENT_ALIAS, COMPONENT_PREFIX } = require('./doc.config');
-
-const port = 9000;
 
 const openUrl = `http://localhost:${port}`;
 
 console.log(chalk.yellow('The development server is starting......wait me.'));
 
-const compiler = webpack({
+const compiler = webpack(rewriteWebpackConfig({
   mode: 'development',
   entry: ['webpack-hot-middleware/client?reload=true&noInfo=true', './site/src/main.tsx'],
   output: {
@@ -32,17 +33,13 @@ const compiler = webpack({
   devtool: '#cheap-module-eval-source-map',
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.mdx'],
-    alias: {
-      [DOCS_ALIAS]: DOCS_DIR,
-      [COMPONENT_ALIAS]: COMPONENT_DIR
-    }
   },
   module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
         loader: ['babel-loader'],
-        include: [SITE_DIR, COMPONENT_DIR]
+        include: [siteDir, componentDir]
       },
       {
         test: /\.(md|mdx)$/,
@@ -61,28 +58,15 @@ const compiler = webpack({
       {
         test: /\.(ts|tsx)$/,
         loader: ['ts-loader'],
-        include: [SITE_DIR, COMPONENT_DIR]
+        include: [siteDir, componentDir]
       },
       {
         test: /\.less$/,
         use: [
           'style-loader',
-          'css-loader', 'postcss-loader', 'less-loader',
-          {
-            loader: 'style-resources-loader',
-            options: {
-              patterns: [
-                path.resolve(`${COMPONENT_DIR}/global.less`)
-              ],
-              injector: (source, resouces) => {
-                return `@prefix: ${COMPONENT_PREFIX};`
-                  + resouces.map(({ content }) => content).join('')
-                  + source;
-              }
-            }
-          }
+          'css-loader', 'postcss-loader', 'less-loader'
         ],
-        include: [SITE_DIR, COMPONENT_DIR]
+        include: [siteDir, componentDir]
       },
       {
         test: /\.css$/,
@@ -125,9 +109,7 @@ const compiler = webpack({
         removeAttributeQuotes: true
       }
     }),
-    new webpack.EnvironmentPlugin({
-      prefix: COMPONENT_PREFIX
-    })
+    new webpack.EnvironmentPlugin(envConfig)
   ],
   optimization: {
     noEmitOnErrors: true
@@ -140,7 +122,7 @@ const compiler = webpack({
     tls: 'empty',
     child_process: 'empty'
   }
-});
+}));
 
 const devMiddleware = webpackDevMiddleware(compiler, {
   publicPath: '/',

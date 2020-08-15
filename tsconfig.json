@@ -22,8 +22,9 @@
     "jsx": "react",
     "baseUrl": "./",
     "paths": {
-      "components/*": ["components/*"],
-      "docs/*": ["docs/*"]
+      "@/*": ["*"]
+      // "@components": ["components"],
+      // "@docs/*": ["docs/*"]
     }
   },
   "include": [
