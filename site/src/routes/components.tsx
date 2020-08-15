@@ -1,5 +1,5 @@
-import AnnotationEditor from 'docs/annotation-editor.mdx';
-import Button from 'docs/button.mdx';
+import AnnotationEditor from '@/docs/annotation-editor.mdx';
+import Button from '@/docs/button.mdx';
 
 const components = [
   { component: AnnotationEditor, path: '/components/annotation-editor', exact: true, meta: { name: 'AnnotationEditor 标注工具' } },
