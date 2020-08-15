@@ -7,19 +7,17 @@
 $ yarn install
 
 # development
-$ yarn run dev
+$ yarn run start
 
-# update routes
-$ yarn run update
+# update component routes
+$ yarn run update:route
 
 # update entry
 $ yarn run update:entry
 
-# build lib
-$ yarn run build
+# build package
+$ yarn run build:prod
 
-# build es module
-$ yarn run build:es
 ```
 
 ## 🎨 Components
