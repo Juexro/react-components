@@ -502,11 +502,11 @@ export default class AnnotationEditor {
 
       prevGeo = geo;
       workspace.add(geo);
-      workspace.setClipPath(geo.childAt(0));
+      workspace.setClipPath(geo);
 
       instance.flush();
 
-      const {xRange, yRange} = this.computedShapeXyRange(geo.childAt(0));
+      const {xRange, yRange} = this.computedShapeXyRange(geo);
 
       const imageData = origin.getContext('2d')?.getImageData(
         xRange[0] + objectData.position[0],
