@@ -9,7 +9,8 @@
     "start": "node ./scripts/create-doc-route.js && node ./scripts/webpack.dev.js",
     "update:route": "node ./scripts/create-doc-route.js",
     "update:entry": "node ./scripts/create-entry.js",
-    "build:prod": "rimraf ./es && rimraf ./lib && node ./scripts/create-entry.js && gulp --cwd ./ -f ./scripts/gulpfile.js"
+    "build:prod": "rimraf ./es && rimraf ./lib && node ./scripts/create-entry.js && gulp --cwd ./ -f ./scripts/gulpfile.js",
+    "build:site": "rimraf ./document && node ./scripts/build-site.js"
   },
   "files": [
     "lib",

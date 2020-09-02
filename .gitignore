@@ -4,6 +4,7 @@
 /es/
 /types/
 /components/index.tsx
+/document/
 
 npm-debug.log*
 yarn-debug.log*
