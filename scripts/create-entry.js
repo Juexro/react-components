@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { camelCase, getJrcConfig } = require('./utils');
 
-const { componentDir } = getJrcConfig();
+const { input: { componentDir } } = getJrcConfig();
 
 const importSentences = [];
 const exportSentences = [];

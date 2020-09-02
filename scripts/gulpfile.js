@@ -10,7 +10,7 @@ const path = require('path');
 const { getJrcConfig, getEnvConfig } = require('./utils');
 
 const envConfig = getEnvConfig();
-const { componentDir, esmDir, cjsDir } = getJrcConfig();
+const { input: { componentDir }, output: { esmDir, cjsDir } } = getJrcConfig();
 
 function setEnv() {
   Object.entries(envConfig).forEach(([k, v]) => {
@@ -22,7 +22,6 @@ const source = [path.join(componentDir, '**/*.{ts,tsx}')];
 const ignore = [path.join(componentDir, '**/*.d.ts')];
 const style = [path.join(componentDir, '**/*.less')];
 
-// console.log(process.cwd())
 gulp.task('copy:less', function() {
   return gulp
     .src(style)
@@ -115,4 +114,3 @@ gulp.task('build:esm', function() {
 });
 
 exports.default = gulp.series('copy:less', 'build:css', 'build:types', 'build:esm', 'build:cjs');
-// exports.default = gulp.series('copy:less');

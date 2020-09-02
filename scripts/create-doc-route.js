@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 
 const { camelCase, getJrcConfig } = require('./utils');
-const { docsDir, siteDir } = getJrcConfig();
+const { input: { docsDir, siteDir } } = getJrcConfig();
 const YAML_REGEXP = /---[\s\S]+?---/;
 const SPLIT_LINE = os.platform() === 'win32' ? /\r\n/ : /\n/;
 

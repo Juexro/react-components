@@ -2,11 +2,16 @@ const path = require('path');
 
 module.exports = {
   port: 9000,
-  docsDir: './docs',
-  siteDir: './site',
-  componentDir: './components',
-  esmDir: './es',
-  cjsDir: './lib',
+  input: {
+    docsDir: './docs',
+    siteDir: './site',
+    componentDir: './components',
+  },
+  output: {
+    esmDir: './es',
+    cjsDir: './lib',
+    siteDir: './document'
+  },
   rewriteWebpackConfig(config) {
     config.resolve.alias = {
       '@/components': path.join(process.cwd(), './components'),

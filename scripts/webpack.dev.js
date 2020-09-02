@@ -10,10 +10,10 @@ const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const { getEnvConfig, getJrcConfig, resolve } = require('./utils');
+const { getEnvConfig, getJrcConfig } = require('./utils');
 
 const envConfig = getEnvConfig();
-const { port, siteDir, componentDir, rewriteWebpackConfig } = getJrcConfig();
+const { port, input: { siteDir, componentDir }, output , rewriteWebpackConfig } = getJrcConfig();
 
 const app = express();
 
@@ -26,7 +26,7 @@ const compiler = webpack(rewriteWebpackConfig({
   entry: ['webpack-hot-middleware/client?reload=true&noInfo=true', './site/src/main.tsx'],
   output: {
     publicPath: '/',
-    path: path.resolve(__dirname, '../dist'),
+    path: output.siteDir,
     filename: 'static/js/[name].[hash].js',
     chunkFilename: 'static/js/[name].[chunkhash].js'
   },
@@ -146,7 +146,7 @@ app.use(devMiddleware);
 app.use(hotMiddleware);
 
 app.get('*', (req, res, next) =>{
-  const filename = path.join(__dirname, '..', 'dist', 'index.html');
+  const filename = path.join(output.siteDir, 'index.html');
   compiler.outputFileSystem.readFile(filename, (err, result) =>{
     if(err){
         return(next(err));

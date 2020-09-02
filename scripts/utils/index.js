@@ -27,19 +27,29 @@ function getJrcConfig() {
   const resolveDirs = ['docsDir', 'siteDir', 'componentDir', 'esmDir', 'cjsDir'];
   const defaultConfig = {
     port: 9000,
-    docsDir: './docs',
-    siteDir: './site',
-    componentDir: './components',
-    esmDir: './es',
-    cjsDir: './lib',
+    input: {
+      docsDir: './docs',
+      siteDir: './site',
+      componentDir: './components',
+    },
+    output: {
+      esmDir: './es',
+      cjsDir: './lib',
+      siteDir: './document'
+    },
     rewriteWebpackConfig(config) {
       return config;
     }
   };
   Object.assign(defaultConfig, (result && result.config) || {});
-  Object.entries(defaultConfig).forEach(([key, value]) => {
+  Object.entries(defaultConfig.input).forEach(([key, value]) => {
     if (resolveDirs.includes(key)) {
-      defaultConfig[key] = resolve(value);
+      defaultConfig.input[key] = resolve(value);
+    }
+  });
+  Object.entries(defaultConfig.output).forEach(([key, value]) => {
+    if (resolveDirs.includes(key)) {
+      defaultConfig.output[key] = resolve(value);
     }
   });
   return defaultConfig;
