@@ -76,15 +76,18 @@ export default class AnnotationEditor {
   public async init(options: AnnotationEditorOptions) {
     this.options = options;
     const { imgUrl, mode } = options;
+    
+    if (imgUrl) {
+      await this.drawImage(imgUrl);
+    }
 
-    const image = await this.drawImage(imgUrl);
-    this.image = image;
-    this.workspace.add(image);
-
-    this.switchMode(mode);
+    this.setMode(mode);
   }
 
-  public async drawImage(url: string) {
+  private async drawImage(url: string) {
+    if (this.image) {
+      this.workspace.remove(this.image);
+    }
     const image = await this.loadImage(url);
     const geo = new zrender.Image({
       style: {
@@ -95,7 +98,8 @@ export default class AnnotationEditor {
         image: url
       }
     });
-    return geo;
+    this.image = geo;
+    this.workspace.add(geo);
   }
 
   public setModel(model: ObjectData[]) {
@@ -183,14 +187,7 @@ export default class AnnotationEditor {
 
   private switchModeHooks: Array<() => void> = [];
 
-  public switchMode(mode: AnnotationEditorMode | undefined) {
-    const on = (name: string, handler: Function) => {
-      this.instance.on(name, handler);
-      this.switchModeHooks.push(() => {
-        this.instance.off(name, handler);
-      });
-    };
-
+  public setMode(mode: AnnotationEditorMode | undefined | AnnotationEditorMode[]) {
     this.workspace.attr({
       draggable: false
     });
@@ -198,6 +195,23 @@ export default class AnnotationEditor {
       handler();
     });
     this.switchModeHooks = [];
+
+    if (Array.isArray(mode)) {
+      mode.forEach(item => {
+        this.switchMode(item);
+      })
+    } else {
+      this.switchMode(mode);
+    }
+  }
+
+  public switchMode(mode: AnnotationEditorMode | undefined) {
+    const on = (name: string, handler: Function) => {
+      this.instance.on(name, handler);
+      this.switchModeHooks.push(() => {
+        this.instance.off(name, handler);
+      });
+    };
 
     switch(mode) {
       case AnnotationEditorMode.DragImage: {
@@ -208,6 +222,7 @@ export default class AnnotationEditor {
       }
       case AnnotationEditorMode.Rect: {
         const mousedown = (e: any) => {
+          e.cancelBubble = true;
           const { xRange, yRange } = this.computedShapeXyRange(this.image);
           const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
 
@@ -239,6 +254,7 @@ export default class AnnotationEditor {
           this.workspace.add(grp);
 
           const mousemove = (e: any) => {
+            e.cancelBubble = true;
             const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
             const diffX = offsetX - mousedownPosition.x;
             const diffY = offsetY - mousedownPosition.y;
@@ -252,7 +268,8 @@ export default class AnnotationEditor {
 
           on('mousemove', mousemove);
 
-          const mouseup = () => {
+          const mouseup = (e: any) => {
+            e.cancelBubble = true;
             this.objects.push(grp);
 
             this.instance.off('mousemove', mousemove);
@@ -270,6 +287,7 @@ export default class AnnotationEditor {
         let polyline: any;
         let range = { xRange: [0, 0], yRange: [0, 0] };
         const click = (e: any) => {
+          e.cancelBubble = true;
           if (!polyline) {
             range = this.computedShapeXyRange(this.image);
           }
@@ -300,6 +318,7 @@ export default class AnnotationEditor {
             grp.add(polyline);
 
             const mousemove = (e: any) => {
+              e.cancelBubble = true;
               const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
               polyline.attr({
                 shape: {
@@ -310,6 +329,7 @@ export default class AnnotationEditor {
             on('mousemove', mousemove);
 
             const dblclick = (e: any) => {
+              e.cancelBubble = true;
               this.instance.off('mousemove', mousemove);
               this.instance.off('dblclick', dblclick);
               const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
@@ -350,6 +370,7 @@ export default class AnnotationEditor {
         this.workspace.eachChild((grp: any) => {
           if (grp.type === 'group' && grp.category === 'annotation') {
             const mousedown = (e: any) => {
+              e.cancelBubble = true;
               const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
               const mousedownPosition = {
                 x: offsetX,
@@ -368,6 +389,7 @@ export default class AnnotationEditor {
               const yRange: [number, number] = [-range.rangeY[0], this.image.style.height - range.rangeY[1]];
       
               const mousemove = (e: any) => {
+                e.cancelBubble = true;
                 const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
 
                 grp.attr({
@@ -379,6 +401,7 @@ export default class AnnotationEditor {
               };
               this.instance.on('mousemove', mousemove);
               const mouseup = (e: any) => {
+                e.cancelBubble = true;
                 this.instance.off('mousemove', mousemove);
                 this.instance.off('mouseup', mouseup);
               };
@@ -408,16 +431,41 @@ export default class AnnotationEditor {
         break;
       }
       case AnnotationEditorMode.Select: {
-        this.objects.forEach((grp: any) => {
-          grp.on('click', () => {
-            if (this.options.select) {
-              this.options.select(grp, this.toObjectData(grp));
-            }
-          });
-        });
+        const click = (e: any) => {
+          e.cancelBubble = true;
+          const grp = this.getObjectGroup(e.target);
+          if (grp && this.options.select) {
+            this.options.select(grp, this.toObjectData(grp));
+          } 
+        };
+
+        on('click', click);
         break;
       }
     }
+  }
+
+  private getObjectGroup(target: any): undefined | any {
+    if (!target) {
+      return;
+    }
+    let depth = 0;
+
+    const deep = (node: any): undefined | any => {
+      if (depth > 5) {
+        return;
+      }
+      if (node instanceof zrender.Group) {
+        return node.category === 'annotation' && node;
+      }
+      if (!node.parent) {
+        return;
+      }
+      depth++;
+      return deep(node.parent);
+    }
+
+    return deep(target);
   }
 
   private toObjectModel(obj: ObjectData, isGroup = true) {
