@@ -11,12 +11,13 @@ export default function  Editor() {
   const ref = useRef();
   let instance = null;
   const tools = [
-    { label: '移动画布', handler: () => { instance.switchMode(AnnotationEditorMode.DragImage) } },
-    { label: 'Alt 缩放画布', handler: () => { instance.switchMode(AnnotationEditorMode.Scale) } },
-    { label: '矩形', handler: () => { instance.switchMode(AnnotationEditorMode.Rect) } },
-    { label: '多边形', handler: () => { instance.switchMode(AnnotationEditorMode.Polyline) } },
-    { label: '移动图形', handler: () => { instance.switchMode(AnnotationEditorMode.Edit) } },
-    { label: '选中图形', handler: () => { instance.switchMode(AnnotationEditorMode.Select) } },
+    { label: '移动画布', handler: () => { instance.setMode(AnnotationEditorMode.DragImage) } },
+    { label: 'Alt 缩放画布', handler: () => { instance.setMode(AnnotationEditorMode.Scale) } },
+    { label: '矩形', handler: () => { instance.setMode(AnnotationEditorMode.Rect) } },
+    { label: '多边形', handler: () => { instance.setMode(AnnotationEditorMode.Polyline) } },
+    { label: '移动图形', handler: () => { instance.setMode(AnnotationEditorMode.Edit) } },
+    { label: '选中图形', handler: () => { instance.setMode(AnnotationEditorMode.Select) } },
+    { label: '多模式', handler: () => { instance.setMode([AnnotationEditorMode.DragImage, AnnotationEditorMode.Scale, AnnotationEditorMode.Edit, AnnotationEditorMode.Select]) } },
     { label: '裁剪选中图形', handler: () => { instance.clipImage() } }
   ];
   useEffect(() => {
