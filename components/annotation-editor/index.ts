@@ -36,6 +36,12 @@ export default class AnnotationEditor {
   public workspace: any;
   public image: any;
   public objects: any[] = [];
+  public globalStyle = {
+    fill: 'transparent',
+    stroke: 'red',
+    lineWidth: 2,
+    strokeNoScale: true
+  };
 
   constructor(public mounted: string | HTMLElement) {
     const root = this.getNode(mounted);
@@ -98,6 +104,7 @@ export default class AnnotationEditor {
         image: url
       }
     });
+    geo.category = 'backgroundImage';
     this.image = geo;
     this.workspace.add(geo);
   }
@@ -215,9 +222,36 @@ export default class AnnotationEditor {
 
     switch(mode) {
       case AnnotationEditorMode.DragImage: {
-        this.workspace.attr({
-          draggable: true
-        });
+        const mousedown = (e: any) => {
+          if (e.target && e.target.category === 'backgroundImage') {
+            e.cancelBubble = true;
+            const mousedownPosition = {
+              x: e.offsetX,
+              y: e.offsetY
+            };
+
+            const [positionX, positionY] = this.workspace.position;
+            const mousemove = (e: any) => {
+              e.cancelBubble = true;
+
+              this.workspace.attr({
+                position: [
+                  positionX + e.offsetX - mousedownPosition.x ,
+                  positionY + e.offsetY - mousedownPosition.y
+                ]
+              })
+            };
+            this.instance.on('mousemove', mousemove);
+            const mouseup = (e: any) => {
+              e.cancelBubble = true;
+              this.instance.off('mousemove', mousemove);
+              this.instance.off('mouseup', mouseup);
+            };
+            this.instance.on('mouseup', mouseup);
+          };
+          
+        };
+        on('mousedown', mousedown);
         break;
       }
       case AnnotationEditorMode.Rect: {
@@ -240,11 +274,7 @@ export default class AnnotationEditor {
           });
           grp.category = 'annotation';
           const rect = new zrender.Rect({
-            style: {
-              fill: 'transparent',
-              stroke: 'red',
-              lineWidth: 2
-            },
+            style: this.globalStyle,
             shape: {
               x: offsetX,
               y: offsetY
@@ -306,11 +336,7 @@ export default class AnnotationEditor {
             grp.category = 'annotation';
 
             polyline = new zrender.Polyline({
-              style: {
-                fill: 'transparent',
-                stroke: 'red',
-                lineWidth: 2
-              },
+              style: this.globalStyle,
               shape: {
                 points: []
               }
@@ -367,53 +393,49 @@ export default class AnnotationEditor {
         break;
       }
       case AnnotationEditorMode.Edit: {
-        this.workspace.eachChild((grp: any) => {
-          if (grp.type === 'group' && grp.category === 'annotation') {
-            const mousedown = (e: any) => {
+        const mousedown = (e: any) => {
+          const grp = e.target && this.getObjectGroup(e.target, 2);
+          if (grp) {
+            e.cancelBubble = true;
+            const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+            const mousedownPosition = {
+              x: offsetX,
+              y: offsetY
+            };
+  
+            const geoRange = this.computedShapeXyRange(grp.childAt(0));
+  
+            const range = {
+              rangeX: [geoRange.xRange[0] + grp.position[0], geoRange.xRange[1] + grp.position[0]],
+              rangeY: [geoRange.yRange[0] + grp.position[1], geoRange.yRange[1] + grp.position[1]]
+            };
+            const [positionX, positionY] = grp.position;
+  
+            const xRange: [number, number] = [-range.rangeX[0], this.image.style.width - range.rangeX[1]];
+            const yRange: [number, number] = [-range.rangeY[0], this.image.style.height - range.rangeY[1]];
+    
+            const mousemove = (e: any) => {
               e.cancelBubble = true;
               const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
-              const mousedownPosition = {
-                x: offsetX,
-                y: offsetY
-              };
-
-              const geoRange = this.computedShapeXyRange(grp.childAt(0));
-
-              const range = {
-                rangeX: [geoRange.xRange[0] + grp.position[0], geoRange.xRange[1] + grp.position[0]],
-                rangeY: [geoRange.yRange[0] + grp.position[1], geoRange.yRange[1] + grp.position[1]]
-              };
-              const [positionX, positionY] = grp.position;
-
-              const xRange: [number, number] = [-range.rangeX[0], this.image.style.width - range.rangeX[1]];
-              const yRange: [number, number] = [-range.rangeY[0], this.image.style.height - range.rangeY[1]];
-      
-              const mousemove = (e: any) => {
-                e.cancelBubble = true;
-                const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
-
-                grp.attr({
-                  position: [
-                    positionX + this.computedNumberInRange(offsetX - mousedownPosition.x, xRange),
-                    positionY + this.computedNumberInRange(offsetY - mousedownPosition.y, yRange)
-                  ]
-                })
-              };
-              this.instance.on('mousemove', mousemove);
-              const mouseup = (e: any) => {
-                e.cancelBubble = true;
-                this.instance.off('mousemove', mousemove);
-                this.instance.off('mouseup', mouseup);
-              };
-              this.instance.on('mouseup', mouseup);
+  
+              grp.attr({
+                position: [
+                  positionX + this.computedNumberInRange(offsetX - mousedownPosition.x, xRange),
+                  positionY + this.computedNumberInRange(offsetY - mousedownPosition.y, yRange)
+                ]
+              })
             };
-
-            grp.on('mousedown', mousedown);
-            this.switchModeHooks.push(() => {
-              grp.off('mousedown', mousedown);
-            });
+            this.instance.on('mousemove', mousemove);
+            const mouseup = (e: any) => {
+              e.cancelBubble = true;
+              this.instance.off('mousemove', mousemove);
+              this.instance.off('mouseup', mouseup);
+            };
+            this.instance.on('mouseup', mouseup);
           }
-        })
+        };
+
+        on('mousedown', mousedown);
         break;
       }
       case AnnotationEditorMode.Scale: {
@@ -445,14 +467,14 @@ export default class AnnotationEditor {
     }
   }
 
-  private getObjectGroup(target: any): undefined | any {
+  private getObjectGroup(target: any, max = 5): undefined | any {
     if (!target) {
       return;
     }
     let depth = 0;
 
     const deep = (node: any): undefined | any => {
-      if (depth > 5) {
+      if (depth > max) {
         return;
       }
       if (node instanceof zrender.Group) {
