@@ -316,6 +316,15 @@ export default class AnnotationEditor {
 
           const mouseup = (e: any) => {
             e.cancelBubble = true;
+            const { xRange, yRange } = this.computedShapeXyRange(rect);
+            rect.attr({
+              shape: {
+                x: xRange[0],
+                y: yRange[0],
+                width: xRange[1] - xRange[0],
+                height: yRange[1] - yRange[0]
+              }
+            })
             this.objects.push(grp);
 
             this.instance.off('mousemove', mousemove);
@@ -488,77 +497,200 @@ export default class AnnotationEditor {
         controller.category = 'controller';
 
         object.shape.points.forEach((point: [number, number], index: number) => {
+          const circle = new zrender.Circle({
+            style: {
+              fill: 'red'
+            },
+            shape: {
+              cx: point[0],
+              cy: point[1],
+              r: 4
+            }
+          });
+          const mousedown = (e: any) => {
+            e.cancelBubble = true;
+            const grp = circle.parent.parent;
+            const { cx, cy } = circle.shape;
+            const xRange: [number, number] = [-grp.position[0], this.image.style.width - grp.position[0]];
+            const yRange: [number, number] = [-grp.position[1], this.image.style.height - grp.position[1]];
+      
+            const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+      
+            const mousedownPosition = {
+              x: offsetX,
+              y: offsetY
+            };
+      
+            const mousemove = (e: any) => {
+              e.cancelBubble = true;
+              const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+      
+              const diffX = this.computedNumberInRange(cx + offsetX - mousedownPosition.x, xRange);
+              const diffY = this.computedNumberInRange(cy + offsetY - mousedownPosition.y, yRange);
+      
+              circle.attr({
+                shape: {
+                  cx: diffX,
+                  cy: diffY
+                }
+              });
+              object.shape.points[index] = [diffX, diffY];
+              if (index === 0) {
+                object.shape.points[object.shape.points.length - 1] = [diffX, diffY];
+              }
+              object.attr({
+                shape: {
+                  points: object.shape.points
+                }
+              });
+            };
+            this.instance.on('mousemove', mousemove);
+            const mouseup = (e: any) => {
+              e.cancelBubble = true;
+              this.instance.off('mousemove', mousemove);
+              this.instance.off('mouseup', mouseup);
+            };
+            this.instance.on('mouseup', mouseup);
+          }
+          circle.on('mousedown', mousedown);
           if (index === object.shape.points.length - 1) {
             return;
           }
-          controller.add(this.createControlPoint(point, (offset) => {
-            object.shape.points[index] = offset;
-            if (index === 0) {
-              object.shape.points[object.shape.points.length - 1] = offset;
+          controller.add(circle);
+        });
+        grp.add(controller);
+        return controller;
+      }
+      case 'rect': {
+        const controller = new zrender.Group();
+        controller.category = 'controller';
+
+        const getPoints = () => {
+          const { xRange, yRange } = this.computedShapeXyRange(object);
+          return [
+            [xRange[0], yRange[0]],
+            [xRange[1], yRange[0]],
+            [xRange[1], yRange[1]],
+            [xRange[0], yRange[1]]
+          ];
+        };
+
+        const circles: any[] = [];
+
+        getPoints().forEach((point, index: number) => {
+          const circle = new zrender.Circle({
+            style: {
+              fill: 'red'
+            },
+            shape: {
+              cx: point[0],
+              cy: point[1],
+              r: 4
             }
-            object.attr({
-              shape: {
-                points: object.shape.points
+          });
+          circles.push(circle);
+
+          const mousedown = (e: any) => {
+            e.cancelBubble = true;
+            const grp = circle.parent.parent;
+            const { cx, cy } = circle.shape;
+            const objectShape = { ...object.shape };
+            const pointRange = {
+              xRange: [-grp.position[0], this.image.style.width - grp.position[0]],
+              yRange: [-grp.position[1], this.image.style.height - grp.position[1]]
+            };
+
+            const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+      
+            const mousedownPosition = {
+              x: offsetX,
+              y: offsetY
+            };
+      
+            const mousemove = (e: any) => {
+              e.cancelBubble = true;
+              const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+      
+              const diffX = this.computedNumberInRange(cx + offsetX - mousedownPosition.x, pointRange.xRange as [number, number]);
+              const diffY = this.computedNumberInRange(cy + offsetY - mousedownPosition.y, pointRange.yRange as [number, number]);
+
+              getPoints().forEach((point, index) => {
+                circles[index].attr({
+                  shape: {
+                    cx: point[0],
+                    cy: point[1]
+                  }
+                })
+              })
+             
+              switch (index) {
+                case 0: {
+                  object.attr({
+                    shape: {
+                      x: objectShape.x + (diffX - cx),
+                      y: objectShape.y + (diffY - cy),
+                      width: objectShape.width - (diffX - cx),
+                      height: objectShape.height - (diffY - cy)
+                    }
+                  })
+                  break;
+                }
+                case 1: {
+                  object.attr({
+                    shape: {
+                      y: objectShape.y + (diffY - cy),
+                      width: objectShape.width + (diffX - cx),
+                      height: objectShape.height - (diffY - cy)
+                    }
+                  })
+                  break;
+                }
+                case 2: {
+                  object.attr({
+                    shape: {
+                      width: objectShape.width + (diffX - cx),
+                      height: objectShape.height + (diffY - cy)
+                    }
+                  })
+                  break;
+                }
+                case 3: {
+                  object.attr({
+                    shape: {
+                      x: objectShape.x + (diffX - cx),
+                      width: objectShape.width - (diffX - cx),
+                      height: objectShape.height + (diffY - cy)
+                    }
+                  })
+                  break;
+                }
               }
-            });
-          }))
+            };
+            this.instance.on('mousemove', mousemove);
+            const mouseup = (e: any) => {
+              e.cancelBubble = true;
+              const { xRange, yRange } = this.computedShapeXyRange(object);
+              object.attr({
+                shape: {
+                  x: xRange[0],
+                  y: yRange[0],
+                  width: xRange[1] - xRange[0],
+                  height: yRange[1] - yRange[0]
+                }
+              })
+              this.objects.push(grp);
+              this.instance.off('mousemove', mousemove);
+              this.instance.off('mouseup', mouseup);
+            };
+            this.instance.on('mouseup', mouseup);
+          }
+          circle.on('mousedown', mousedown);
+          controller.add(circle);
         });
         grp.add(controller);
         return controller;
       }
     }
-  }
-
-  private createControlPoint(position: [number, number], callback?: (offset: [number, number]) => void) {
-    const circle = new zrender.Circle({
-      style: {
-        fill: 'red'
-      },
-      shape: {
-        cx: position[0],
-        cy: position[1],
-        r: 4
-      }
-    });
-    const mousedown = (e: any) => {
-      e.cancelBubble = true;
-      const grp = circle.parent.parent;
-      const { cx, cy } = circle.shape;
-      const xRange: [number, number] = [-grp.position[0], this.image.style.width - grp.position[0]];
-      const yRange: [number, number] = [-grp.position[1], this.image.style.height - grp.position[1]];
-
-      const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
-
-      const mousedownPosition = {
-        x: offsetX,
-        y: offsetY
-      };
-
-      const mousemove = (e: any) => {
-        e.cancelBubble = true;
-        const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
-
-        const diffX = this.computedNumberInRange(cx + offsetX - mousedownPosition.x, xRange);
-        const diffY = this.computedNumberInRange(cy + offsetY - mousedownPosition.y, yRange);
-
-        circle.attr({
-          shape: {
-            cx: diffX,
-            cy: diffY
-          }
-        });
-        callback && callback([diffX, diffY]);
-      };
-      this.instance.on('mousemove', mousemove);
-      const mouseup = (e: any) => {
-        e.cancelBubble = true;
-        this.instance.off('mousemove', mousemove);
-        this.instance.off('mouseup', mouseup);
-      };
-      this.instance.on('mouseup', mouseup);
-    }
-    circle.on('mousedown', mousedown);
-    return circle;
   }
 
   private getObjectGroup(target: any, max = 5): undefined | any {
