@@ -22,12 +22,12 @@ export interface ObjectData {
 }
 
 export enum AnnotationEditorMode {
-  Rect = 1,
-  Polyline,
-  DragImage,
-  Edit,
-  Scale,
-  Select
+  DrawRect = 1,
+  DrawPolyline,
+  EditObject,
+  SelectObject,
+  DragWorkspace,
+  ScaleWorkspace
 }
 
 export default class AnnotationEditor {
@@ -179,6 +179,8 @@ export default class AnnotationEditor {
     return {
       xRange: range.xRange.sort((a, b) => a - b),
       yRange: range.yRange.sort((a, b) => a - b)
+    } as {
+      xRange: [number, number], yRange: [number, number]
     }
   }
 
@@ -221,7 +223,7 @@ export default class AnnotationEditor {
     };
 
     switch(mode) {
-      case AnnotationEditorMode.DragImage: {
+      case AnnotationEditorMode.DragWorkspace: {
         const mousedown = (e: any) => {
           if (e.target && e.target.category === 'backgroundImage') {
             e.cancelBubble = true;
@@ -254,7 +256,21 @@ export default class AnnotationEditor {
         on('mousedown', mousedown);
         break;
       }
-      case AnnotationEditorMode.Rect: {
+      case AnnotationEditorMode.ScaleWorkspace: {
+        const mousewheel = (e: any) => {
+          if (e.event.altKey) {
+            const [scaleX, scaleY] = this.workspace.scale;
+            const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+            this.workspace.attr({
+              origin: [offsetX, offsetY],
+              scale: [scaleX + 0.1 * e.wheelDelta, scaleY + 0.1 * e.wheelDelta]
+            });
+          }
+        };
+        on('mousewheel', mousewheel);
+        break;
+      }
+      case AnnotationEditorMode.DrawRect: {
         const mousedown = (e: any) => {
           e.cancelBubble = true;
           const { xRange, yRange } = this.computedShapeXyRange(this.image);
@@ -312,7 +328,7 @@ export default class AnnotationEditor {
         on('mousedown', mousedown);
         break;
       }
-      case AnnotationEditorMode.Polyline: {
+      case AnnotationEditorMode.DrawPolyline: {
         let points: Array<[number, number]> = [];
         let polyline: any;
         let range = { xRange: [0, 0], yRange: [0, 0] };
@@ -392,11 +408,19 @@ export default class AnnotationEditor {
         on('click', click);
         break;
       }
-      case AnnotationEditorMode.Edit: {
+      case AnnotationEditorMode.EditObject: {
+        let prevGroup: any;
         const mousedown = (e: any) => {
           const grp = e.target && this.getObjectGroup(e.target, 2);
           if (grp) {
             e.cancelBubble = true;
+            if (prevGroup && grp !== prevGroup) {
+              const controller = prevGroup.children().find((item: any) => item.category === 'controller');
+              controller && prevGroup.remove(controller);
+            }
+            prevGroup = grp;
+            this.drawObjectController(grp);
+
             const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
             const mousedownPosition = {
               x: offsetX,
@@ -438,21 +462,7 @@ export default class AnnotationEditor {
         on('mousedown', mousedown);
         break;
       }
-      case AnnotationEditorMode.Scale: {
-        const mousewheel = (e: any) => {
-          if (e.event.altKey) {
-            const [scaleX, scaleY] = this.workspace.scale;
-            const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
-            this.workspace.attr({
-              origin: [offsetX, offsetY],
-              scale: [scaleX + 0.1 * e.wheelDelta, scaleY + 0.1 * e.wheelDelta]
-            });
-          }
-        };
-        on('mousewheel', mousewheel);
-        break;
-      }
-      case AnnotationEditorMode.Select: {
+      case AnnotationEditorMode.SelectObject: {
         const click = (e: any) => {
           e.cancelBubble = true;
           const grp = this.getObjectGroup(e.target);
@@ -465,6 +475,90 @@ export default class AnnotationEditor {
         break;
       }
     }
+  }
+
+  private drawObjectController(grp: any) {
+    if (grp.children().find((item: any) => item.category === 'controller')) {
+      return;
+    }
+    const object = grp.childAt(0);
+    switch (object.type) {
+      case 'polyline': {
+        const controller = new zrender.Group();
+        controller.category = 'controller';
+
+        object.shape.points.forEach((point: [number, number], index: number) => {
+          if (index === object.shape.points.length - 1) {
+            return;
+          }
+          controller.add(this.createControlPoint(point, (offset) => {
+            object.shape.points[index] = offset;
+            if (index === 0) {
+              object.shape.points[object.shape.points.length - 1] = offset;
+            }
+            object.attr({
+              shape: {
+                points: object.shape.points
+              }
+            });
+          }))
+        });
+        grp.add(controller);
+        return controller;
+      }
+    }
+  }
+
+  private createControlPoint(position: [number, number], callback?: (offset: [number, number]) => void) {
+    const circle = new zrender.Circle({
+      style: {
+        fill: 'red'
+      },
+      shape: {
+        cx: position[0],
+        cy: position[1],
+        r: 4
+      }
+    });
+    const mousedown = (e: any) => {
+      e.cancelBubble = true;
+      const grp = circle.parent.parent;
+      const { cx, cy } = circle.shape;
+      const xRange: [number, number] = [-grp.position[0], this.image.style.width - grp.position[0]];
+      const yRange: [number, number] = [-grp.position[1], this.image.style.height - grp.position[1]];
+
+      const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+
+      const mousedownPosition = {
+        x: offsetX,
+        y: offsetY
+      };
+
+      const mousemove = (e: any) => {
+        e.cancelBubble = true;
+        const [offsetX, offsetY] = this.workspace.transformCoordToLocal(e.offsetX, e.offsetY);
+
+        const diffX = this.computedNumberInRange(cx + offsetX - mousedownPosition.x, xRange);
+        const diffY = this.computedNumberInRange(cy + offsetY - mousedownPosition.y, yRange);
+
+        circle.attr({
+          shape: {
+            cx: diffX,
+            cy: diffY
+          }
+        });
+        callback && callback([diffX, diffY]);
+      };
+      this.instance.on('mousemove', mousemove);
+      const mouseup = (e: any) => {
+        e.cancelBubble = true;
+        this.instance.off('mousemove', mousemove);
+        this.instance.off('mouseup', mouseup);
+      };
+      this.instance.on('mouseup', mouseup);
+    }
+    circle.on('mousedown', mousedown);
+    return circle;
   }
 
   private getObjectGroup(target: any, max = 5): undefined | any {
