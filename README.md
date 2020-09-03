@@ -18,6 +18,9 @@ $ yarn run update:entry
 # build package
 $ yarn run build:prod
 
+# build site
+$ yarn run build:site
+
 ```
 
 ## 🎨 Components
