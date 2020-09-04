@@ -94,6 +94,10 @@ export default class AnnotationEditor {
     if (this.image) {
       this.workspace.remove(this.image);
     }
+    this.workspace.attr({
+      position: [0, 0],
+      scale: [1, 1]
+    });
     const image = await this.loadImage(url);
     const geo = new zrender.Image({
       style: {
@@ -467,7 +471,12 @@ export default class AnnotationEditor {
             this.instance.on('mouseup', mouseup);
           }
         };
-
+        this.switchModeHooks.push(() => {
+          if (prevGroup) {
+            const controller = prevGroup.children().find((item: any) => item.category === 'controller');
+            controller && prevGroup.remove(controller);
+          }
+        });
         on('mousedown', mousedown);
         break;
       }
