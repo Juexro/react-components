@@ -2,13 +2,13 @@ import zrender from 'zrender';
 
 export interface AnnotationEditorOptions {
   imgUrl: string;
-  mode?: AnnotationEditorMode;
+  mode?: AnnotationEditorMode | AnnotationEditorMode[] | undefined;
   select?: (instance: any, data: ObjectData) => void;
 }
 
 export interface OptionalAnnotationEditorOptions {
   imgUrl?: string;
-  mode?: AnnotationEditorMode;
+  mode?: AnnotationEditorMode | AnnotationEditorMode[] | undefined;
   select?: (instance: any, data: ObjectData) => void;
 }
 
@@ -836,5 +836,24 @@ export default class AnnotationEditor {
     });
 
     instance.dispose();
+  }
+
+  public destroy() {
+    if (this.instance) {;
+      this.switchModeHooks.forEach(handler => {
+        handler();
+      });
+      this.switchModeHooks = [];
+      this.instance.dispose();
+    }
+  }
+  
+  public removeObjects() {
+    if (this.workspace) {
+      this.objects.forEach(shape => {
+        this.workspace.remove(shape);
+      });
+      this.objects = [];
+    }
   }
 }
