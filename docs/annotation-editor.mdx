@@ -7,7 +7,7 @@ import TestImage from './test.png';
 import { useRef, useEffect, useState } from 'react';
 import Button from '@/components/button';
 
-export default function  Editor() {
+export function EditorDemo() {
   const ref = useRef();
   let instance = null;
   const tools = [
@@ -17,14 +17,18 @@ export default function  Editor() {
     { label: '多边形', handler: () => { instance.setMode(AnnotationEditorMode.DrawPolyline) } },
     { label: '移动图形', handler: () => { instance.setMode(AnnotationEditorMode.EditObject) } },
     { label: '选中图形', handler: () => { instance.setMode(AnnotationEditorMode.SelectObject) } },
-    { label: '多模式', handler: () => { 
-      instance.setMode([
-        AnnotationEditorMode.DragWorkspace,
-        AnnotationEditorMode.ScaleWorkspace,
-        AnnotationEditorMode.EditObject,
-        AnnotationEditorMode.SelectObject
-      ]) } },
-    { label: '裁剪选中图形', handler: () => { instance.clipImage() } }
+    { label: '裁剪选中图形', handler: () => { instance.clipImage() } },
+    { 
+      label: '多模式',
+      handler: () => { 
+        instance.setMode([
+          AnnotationEditorMode.DragWorkspace,
+          AnnotationEditorMode.ScaleWorkspace,
+          AnnotationEditorMode.EditObject,
+          AnnotationEditorMode.SelectObject
+        ])
+      }
+    }
   ];
   useEffect(() => {
     instance = new AnnotationEditor(ref.current);
@@ -38,7 +42,7 @@ export default function  Editor() {
   }, []);
   return (
     <div>
-      <div>
+      <div style={{marginBottom: '20px'}}>
         {
           tools.map((tool, index) => {
             return (
@@ -47,7 +51,22 @@ export default function  Editor() {
           })
         }
       </div>
-      <div style={{width: '100%', height: '800px'}} ref={ref}></div>
+      <div style={{width: '100%', height: '400px'}} ref={ref}></div>
     </div>
   )
 }
+
+::: section demo-container
+<EditorDemo></EditorDemo>
+:::
+
+
+::: section api-container
+## API
+
+| 属性 | 说明 | 类型 | 默认值 |
+| :-----| :---- | :---- | :---- |
+| imgUrl | 背景图片 | string | - |
+| mode | 编辑模式 | AnnotationEditorMode  | - |
+| select | 选中物体 | (grp: zrender.Group, data: ObjectData) => void | - |
+:::
