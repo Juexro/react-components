@@ -623,15 +623,6 @@ export default class AnnotationEditor {
               const diffX = this.computedNumberInRange(cx + offsetX - mousedownPosition.x, pointRange.xRange as [number, number]);
               const diffY = this.computedNumberInRange(cy + offsetY - mousedownPosition.y, pointRange.yRange as [number, number]);
 
-              getPoints().forEach((point, index) => {
-                circles[index].attr({
-                  shape: {
-                    cx: point[0],
-                    cy: point[1]
-                  }
-                })
-              })
-             
               switch (index) {
                 case 0: {
                   object.attr({
@@ -674,6 +665,14 @@ export default class AnnotationEditor {
                   break;
                 }
               }
+              getPoints().forEach((point, index) => {
+                circles[index].attr({
+                  shape: {
+                    cx: point[0],
+                    cy: point[1]
+                  }
+                })
+              })
             };
             this.instance.on('mousemove', mousemove);
             const mouseup = (e: any) => {
@@ -686,7 +685,7 @@ export default class AnnotationEditor {
                   width: xRange[1] - xRange[0],
                   height: yRange[1] - yRange[0]
                 }
-              })
+              });
               this.objects.push(grp);
               this.instance.off('mousemove', mousemove);
               this.instance.off('mouseup', mouseup);
