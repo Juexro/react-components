@@ -484,13 +484,15 @@ export default class AnnotationEditor {
         break;
       }
       case AnnotationEditorMode.SelectObject: {
-        const onDelete = () => {
-          if (this.selection) {
-            this.workspace.remove(this.selection);
-            this.objects = this.objects.filter(obj => {
-              return obj !== this.selection;
-            });
-            this.selection = null;
+        const onDelete = (e: any) => {
+          if ([8, 190, 110].includes(e.keyCode)) {
+            if (this.selection) {
+              this.workspace.remove(this.selection);
+              this.objects = this.objects.filter(obj => {
+                return obj !== this.selection;
+              });
+              this.selection = null;
+            }
           }
         };
         const click = (e: any) => {
