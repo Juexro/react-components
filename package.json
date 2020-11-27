@@ -1,6 +1,6 @@
 {
   "name": "@juexro/react-components",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "description": "react components",
   "main": "lib/index.js",
   "module": "es/index.js",

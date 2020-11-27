@@ -1,5 +1,10 @@
 # react-components
 
+## Production
+```bash
+yarn add @juexro/react-components
+```
+
 ## 🚀 Development
 
 ```bash
