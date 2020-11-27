@@ -36,6 +36,7 @@ export default class AnnotationEditor {
   public workspace: any;
   public image: any;
   public objects: any[] = [];
+  public selection: any;
   public globalStyle = {
     fill: 'transparent',
     stroke: 'red',
@@ -426,6 +427,8 @@ export default class AnnotationEditor {
         const mousedown = (e: any) => {
           const grp = e.target && this.getObjectGroup(e.target, 2);
           if (grp) {
+            this.selection = grp;
+
             e.cancelBubble = true;
             if (prevGroup && grp !== prevGroup) {
               const controller = prevGroup.children().find((item: any) => item.category === 'controller');
@@ -481,14 +484,30 @@ export default class AnnotationEditor {
         break;
       }
       case AnnotationEditorMode.SelectObject: {
+        const onDelete = () => {
+          if (this.selection) {
+            this.workspace.remove(this.selection);
+            this.objects = this.objects.filter(obj => {
+              return obj !== this.selection;
+            });
+            this.selection = null;
+          }
+        };
         const click = (e: any) => {
           e.cancelBubble = true;
           const grp = this.getObjectGroup(e.target);
+          if (grp) {
+            this.selection = grp;
+          }
           if (grp && this.options.select) {
             this.options.select(grp, this.toObjectData(grp));
           } 
         };
 
+        document.addEventListener('keydown', onDelete, true);
+        this.switchModeHooks.push(() => {
+          document.removeEventListener('keydown', onDelete, true);
+        });
         on('click', click);
         break;
       }
