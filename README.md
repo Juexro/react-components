@@ -2,7 +2,7 @@
 
 ## Production
 ```bash
-yarn add @juexro/react-components
+$ yarn add @juexro/react-components
 ```
 
 ## 🚀 Development
