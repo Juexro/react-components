@@ -35,4 +35,5 @@ $ yarn run build:site
 - [x] edit background-image: drag, scale
 - [x] draw graphics: rect, polyline
 - [x] cut graphics
-- [ ] edit graphics: move, resize
+- [x] edit graphics: move, resize
+- [x] select graphics: get data, delete
